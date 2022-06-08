@@ -1,0 +1,21 @@
+CREATE TABLE "users" (
+	"id" SERIAL PRIMARY KEY,
+	"name" TEXT NOT NULL,
+	"email" TEXT UNIQUE NOT NULL,
+	"password" TEXT NOT NULL
+);
+
+CREATE TABLE "urls" (
+	"id" SERIAL PRIMARY KEY,
+    "userId" INTEGER NOT NULL REFERENCES "users"("id"), 
+	"url" TEXT UNIQUE NOT NULL,
+	"shortUrl" TEXT UNIQUE NOT NULL,
+	"visitCount" INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE "sessions" (
+	"id" SERIAL PRIMARY KEY,
+    "userId" INTEGER NOT NULL REFERENCES "users"("id"), 
+	"token" TEXT UNIQUE NOT NULL,
+	"time" TIMESTAMP NOT NULL DEFAULT NOW()
+);
