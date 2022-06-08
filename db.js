@@ -6,7 +6,7 @@ dotenv.config();
 
 const user = 'postgres';
 const password = process.env.DB_PASSWORD;
-const host = 'localhost';
+const host = process.env.HOST;
 const port = 5432;
 const database = 'projeto16';
 
@@ -18,8 +18,5 @@ const connection = new Pool({
   database
 });
 
-const query = connection.query('SELECT * FROM produtos');
 
-query.then(result => {
-    console.log(result.rows);
-});
+export default connection;
