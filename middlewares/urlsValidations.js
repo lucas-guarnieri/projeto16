@@ -3,8 +3,8 @@ import joi from "joi";
 
 export function urlsValidation(req, res, next){
     const url = req.body;
-    const authorization = req.headers;
-
+    const { authorization } = req.headers;
+    
     if (!authorization){
         res.sendStatus(401);
         return;

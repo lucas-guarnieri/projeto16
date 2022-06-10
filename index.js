@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import signUpRouter from "./routes/signupRouter.js";
 import signInRouter from "./routes/signinRouter.js";
 import urlsRouter from "./routes/urlsRouter.js";
+import userRouter from "./routes/usersRouter.js";
 
 const server = express();
 server.use(cors());
@@ -15,6 +16,7 @@ dotenv.config();
 server.use(signUpRouter);
 server.use(signInRouter);
 server.use(urlsRouter);
+server.use(userRouter);
 
 const port = process.env.PORT;
 server.listen(port, () => console.log(chalk.bold.magentaBright(`server running on port ${port}`)));

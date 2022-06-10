@@ -4,10 +4,11 @@ import jwt from 'jsonwebtoken';
 import dotenv from "dotenv";
 
 dotenv.config();
+const jwtPass = process.env.JWT_SECRET;
 
-export async function signUp(req, res){
+export async function signUp(req, res) {
     const newUser = req.body;
-    
+  
     try {
         const check = await db.query(`
             SELECT *
@@ -30,9 +31,9 @@ export async function signUp(req, res){
         console.log(error);
         res.status(500).send("error registering new user");
     }
-}
+};
 
-export async function signIn(req, res){
+export async function signIn(req, res) {
     const login = req.body;
 
     try {
@@ -58,5 +59,64 @@ export async function signIn(req, res){
     } catch (error) {
         console.log(error);
         res.status(500).send("login error");
+    }
+};
+
+export async function getUSer(req, res) {
+    const userId = req.params.id;
+    const { authorization } = req.headers;
+    const token = authorization?.replace("Bearer ", "").trim();
+    try {
+        const tokenData = jwt.verify(token, jwtPass);
+        try {
+            const session = await db.query(`
+                SELECT *
+                FROM sessions
+                WHERE "userId" = $1 AND token =$2;`,
+                [tokenData.userId, token]
+            );
+            if (session.rowCount != 0){
+                const data = await db.query(`
+                    SELECT
+                    users.id AS "id", users.name, urls."visitCount", urls.id AS "urlsId", urls."shortUrl", urls.url
+                    FROM users
+                    JOIN urls ON urls."userId" = users.id
+                    WHERE urls."userId" = $1
+                    GROUP BY users.id, urls."id";`,
+                    [userId]
+                )
+                if (data.rowCount != 0){
+                    let userUrls = [];
+                    let totalVisit = 0;
+                    for (let urlData of data.rows) {
+                        urlData = {
+                            id: urlData.urlsId,
+                            shortUrl: urlData.shortUrl,
+                            url: urlData.url,
+                            visitCount: urlData.visitCount
+                        }
+                        totalVisit += urlData.visitCount
+                        userUrls.push(urlData);
+                    }
+                    const userObject = {
+                        id: data.rows[0].id,
+                        name: data.rows[0].name,
+                        visitCount: totalVisit,
+                        shortenedUrls: userUrls
+                    }
+                    res.status(200).send(userObject);
+                } else {
+                    return res.sendStatus(404);
+                }
+            } else {
+                return res.sendStatus(401);
+            }
+        } catch (error) {
+            console.log(error);
+            res.status(500).send("loading user error");
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(401).send("authorization error");
     }
 };

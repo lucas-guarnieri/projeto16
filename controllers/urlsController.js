@@ -12,10 +12,10 @@ export async function postUrl(req, res) {
     const token = authorization?.replace("Bearer ", "").trim();
 
     try {
+        const tokenData = jwt.verify(token, jwtPass);
         const smallUrl = nanoid(10);
         const urlObject = { shortUrl: smallUrl }
-        try{
-            const tokenData = jwt.verify(token, jwtPass);
+        try {
             const session = await db.query(`
                 SELECT *
                 FROM sessions
@@ -32,17 +32,16 @@ export async function postUrl(req, res) {
                 [tokenData.userId, url, smallUrl]
             )
             res.status(201).send(urlObject);
-            console.log(session.rows);
         } catch (error) {
             console.log(error);
-            res.status(401).send("authorization error");
+            res.status(500).send("login error");
         }
 
     } catch (error) {
         console.log(error);
-        res.status(500).send("login error");
+        res.status(401).send("authorization error");
     }
-}
+};
 
 export async function getUrl(req, res) {
     const urlId = req.params.id;
@@ -103,7 +102,8 @@ export async function deleteUrl(req, res) {
 
     try {
         const tokenData = jwt.verify(token, jwtPass);
-        const session = await db.query(`
+        try {
+            const session = await db.query(`
                 SELECT *
                 FROM sessions
                 WHERE "userId" = $1 AND token =$2;`,
@@ -133,11 +133,13 @@ export async function deleteUrl(req, res) {
             } else {
                 return res.sendStatus(401);
             }
-        
-            
 
+        } catch (error) {
+            console.log(error);
+            res.status(500).send("error deleting url");
+        }
     } catch (error) {
         console.log(error);
-        res.status(500).send("error deleting url");
-    }
+        res.status(401).send("authorization error");
+    } 
 }
