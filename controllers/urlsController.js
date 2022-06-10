@@ -69,5 +69,31 @@ export async function getUrl(req, res) {
         console.log(error);
         res.status(500).send("error getting url");
     }
+}
 
+export async function getShortUrl(req, res) {
+    const shortUrl = req.params.shortUrl;
+    try {
+        const result = await db.query(`
+            SELECT *
+            FROM urls
+            WHERE "shortUrl" = $1`,
+            [ shortUrl ]
+        );
+        if (result.rowCount != 0) {
+            const newVisitCount = result.rows[0].visitCount + 1;
+            await db.query(`
+                UPDATE urls
+                SET "visitCount" = $1
+                WHERE id = $2`,
+                [ newVisitCount,  result.rows[0].id]
+            );
+            res.redirect(result.rows[0].url);
+        } else {
+            res.sendStatus(404);
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).send("error getting url");
+    }
 }
