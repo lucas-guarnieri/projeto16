@@ -16,7 +16,6 @@ export async function postUrl(req, res) {
         const urlObject = { shortUrl: smallUrl }
         try{
             const tokenData = jwt.verify(token, jwtPass);
-            console.log(tokenData);
             const session = await db.query(`
                 SELECT *
                 FROM sessions
@@ -64,7 +63,6 @@ export async function getUrl(req, res) {
         } else {
             res.sendStatus(404);
         }
-        // res.send(result.rows[0]);
     } catch (error) {
         console.log(error);
         res.status(500).send("error getting url");
@@ -95,5 +93,51 @@ export async function getShortUrl(req, res) {
     } catch (error) {
         console.log(error);
         res.status(500).send("error getting url");
+    }
+}
+
+export async function deleteUrl(req, res) {
+    const shortUrlId = req.params.id;
+    const { authorization } = req.headers;
+    const token = authorization?.replace("Bearer ", "").trim();
+
+    try {
+        const tokenData = jwt.verify(token, jwtPass);
+        const session = await db.query(`
+                SELECT *
+                FROM sessions
+                WHERE "userId" = $1 AND token =$2;`,
+                [tokenData.userId, token]
+            );
+            if (session.rowCount != 0){
+                const result = await db.query(`
+                    SELECT *
+                    FROM urls
+                    WHERE id = $1`,
+                    [ shortUrlId ]
+                );
+                if (result.rowCount != 0){
+                    if (result.rows[0].userId != session.rows[0].userId){
+                        return res.sendStatus(401);
+                    }
+                    await db.query(`
+                        DELETE
+                        FROM urls
+                        WHERE id = $1`,
+                        [ shortUrlId ]
+                    );
+                    res.sendStatus(204);
+                } else {
+                    return res.sendStatus(404);
+                }
+            } else {
+                return res.sendStatus(401);
+            }
+        
+            
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).send("error deleting url");
     }
 }
