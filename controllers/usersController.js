@@ -107,7 +107,23 @@ export async function getUSer(req, res) {
                     }
                     res.status(200).send(userObject);
                 } else {
-                    return res.sendStatus(404);
+                    const checkUser = await db.query(`
+                        SELECT *
+                        FROM users
+                        WHERE id = $1;`,
+                        [userId]
+                    );
+                    if (checkUser.rowCount === 0){
+                        res.status(404).send("user dont exist");
+                    } else {
+                        const userCheckObject = {
+                            id: checkUser.rows[0].id,
+                            name: checkUser.rows[0].name,
+                            visitCount: 0,
+                            shortenedUrls: []
+                        }
+                        res.status(200).send(userCheckObject);
+                    }
                 }
             } else {
                 return res.sendStatus(401);
