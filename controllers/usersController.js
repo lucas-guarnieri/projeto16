@@ -66,6 +66,7 @@ export async function getUSer(req, res) {
     const userId = req.params.id;
     const { authorization } = req.headers;
     const token = authorization?.replace("Bearer ", "").trim();
+
     try {
         const tokenData = jwt.verify(token, jwtPass);
         try {
@@ -84,7 +85,7 @@ export async function getUSer(req, res) {
                     WHERE urls."userId" = $1
                     GROUP BY users.id, urls."id";`,
                     [userId]
-                )
+                );
                 if (data.rowCount != 0){
                     let userUrls = [];
                     let totalVisit = 0;
@@ -120,3 +121,34 @@ export async function getUSer(req, res) {
         res.status(401).send("authorization error");
     }
 };
+
+export async function getRanking(req, res){
+    try {
+        const ranking = await db.query(`
+            SELECT users.id, users.name, 
+            COUNT(urls."visitCount") AS "linksCount", 
+            SUM(COALESCE(urls."visitCount", 0)) AS "visitCount"
+            FROM users
+            LEFT JOIN urls
+            ON urls."userId" = users.id
+            GROUP BY users.id
+            ORDER BY SUM(COALESCE(urls."visitCount", 0)) DESC, COUNT(urls."visitCount") DESC
+            LIMIT 10`
+        );
+        let rankingList = [];
+        for (let users of ranking.rows){
+            users = {
+                id: users.id,
+                name: users.name,
+                linksCount: parseInt(users.linksCount),
+                visitCount: parseInt(users.visitCount),
+            }
+            rankingList.push(users);
+        }
+
+        res.status(200).send(rankingList);
+    } catch (error) {
+        console.log(error);
+        res.status(500).send("loading ranking error");
+    }
+}
