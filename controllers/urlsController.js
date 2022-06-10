@@ -3,11 +3,10 @@ import jwt from 'jsonwebtoken';
 import { nanoid } from 'nanoid'
 import dotenv from "dotenv";
 
-
 dotenv.config();
 const jwtPass = process.env.JWT_SECRET;
 
-export async function postUrl(req, res){
+export async function postUrl(req, res) {
     const { url } = req.body;
     const { authorization } = req.headers;
     const token = authorization?.replace("Bearer ", "").trim();
@@ -43,6 +42,32 @@ export async function postUrl(req, res){
     } catch (error) {
         console.log(error);
         res.status(500).send("login error");
+    }
+}
+
+export async function getUrl(req, res) {
+    const urlId = req.params.id;
+    try {
+        const result = await db.query(`
+            SELECT *
+            FROM urls
+            WHERE id = $1`,
+            [ urlId ]
+        );
+        if (result.rowCount != 0) {
+            const resultObj = {
+                id: result.rows[0].id,
+                shortUrl: result.rows[0].shortUrl,
+                url: result.rows[0].url
+            }
+            res.status(200).send(resultObj);
+        } else {
+            res.sendStatus(404);
+        }
+        // res.send(result.rows[0]);
+    } catch (error) {
+        console.log(error);
+        res.status(500).send("error getting url");
     }
 
 }

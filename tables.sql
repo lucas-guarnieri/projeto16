@@ -9,7 +9,7 @@ CREATE TABLE "users" (
 CREATE TABLE "urls" (
 	"id" SERIAL PRIMARY KEY,
     "userId" INTEGER NOT NULL REFERENCES "users"("id"), 
-	"url" TEXT UNIQUE NOT NULL,
+	"url" TEXT NOT NULL,
 	"shortUrl" TEXT UNIQUE NOT NULL,
 	"visitCount" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP NOT NULL DEFAULT NOW()
